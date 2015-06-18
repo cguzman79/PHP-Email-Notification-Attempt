@@ -1,0 +1,81 @@
+//Email Notification Function.	
+	function email_notification($result,$user_id,$tutor_id,$message)
+	{
+		
+		if($result)
+		{
+		
+		//queries to retrieve student and tutor information for email notification.				
+		$query = "SELECT F_NAME,L_NAME	
+				  FROM STUDENT_APPOINTMENT
+				  WHERE USER_ID = '{$user_id}';";
+		$result .= mysql_result($query);
+		$subj = mysql_fetch_array($result);
+              $name = $subj['F_NAME'];
+			  echo $name;
+		//$result = mysql_real_escape_string($result);
+		$tutor = $name;
+				
+		$query = "SELECT CONTACT_EMAIL_ID AS 'T_EMAIL'
+		          FROM T_USER
+				  WHERE USER_ID = '{$tutor_id}';";
+		$result = mysql_real_escape_string($query);
+		$t_email = $result;
+				
+		$query = "SELECT F_NAME, L_NAME							
+				  
+				  FROM T_USER
+				  WHERE user_id = '{$user_id}';";
+		$result = mysql_real_escape_string($query);
+		$student = $result;
+				
+		$query = "SELECT CONTACT_EMAIL_ID AS 'S_EMAIL'
+				  FROM T_USER
+				  WHERE user_id = '{$user_id}';";
+		$result = mysql_real_escape_string($query);
+		$s_email = $result;		
+		//end of queries to obtain student and tutor information for email notification.
+				
+		//Sending reminder email.				
+		//Message if the student creating the appointment does not have an email on file.
+		if(empty($s_email)&& !empty($t_email))
+		{
+			$message .= "<strong style=\"color: blue;\">The appointment was successfully created.\n  
+			A notification was sent to $tutor, but you do not have an email on file for a reminder to be sent to.</strong>";
+					
+			mail("$t_email","Scheduled Appointment","$student has scheduled an appointment with 
+			you on $selected_appointment_date at $selected_appointment_start_time.","From: TATeRS Notification System");		
+		}//end if student without email.
+				
+		//Message if the tutor does not have an email on file.
+		elseif(empty($t_email) && !empty($s_email))
+		{
+			$message .= "<strong style=\"color: blue;\">The appointment was successfully created.\n  
+			$tutor does not have an email on file for a notification to be sent to, but a reminder was sent to you.</strong>";
+				
+			mail("$s_email","Scheduled Appointment","You have scheduled an appointment on 
+			$selected_appointment_date, at $selected_appointment_start_time, with $tutor.","From: TATeRS Notification System");		
+		//}//end else-if tutor without email.
+				
+		//Message if neither the student or tutor have an email on file.
+		/*elseif(empty($t_email) && empty($s_email))
+		{
+			$message .= "<strong style=\"color: blue;\">The appointment was successfully created.\n  
+			Neither you or $tutor have an email on file for a notification to be sent to.</strong>";			
+		}//end else-if neither have email on file.
+				
+		// Message if both notifications were sent.
+		else
+		{					
+			$message .= "<strong style=\"color: blue;\">The appointment was successfully created.\n  
+			A notification email was sent to $tutor and a reminder copy was emailed to you.</strong>";
+
+			mail("$t_email","Scheduled Appointment","$student has scheduled an appointment with 
+			you on $selected_appointment_date at $selected_appointment_start_time.","From: TATeRS Notification System");
+			
+			mail("$s_email","Scheduled Appointment","You have scheduled an appointment on 
+			$selected_appointment_date, at $selected_appointment_start_time, with $tutor.","From: TATeRS Notification System");
+		}//end successful email sent to student and tutor.	
+		}//end if($result)
+		return $message;
+	}//end email notification function.
